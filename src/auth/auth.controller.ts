@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
+import { JweJwtAuthGuard } from './guards/jwe-jwt.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -11,10 +12,11 @@ export class AuthController {
     return await this.authService.makeJwtToken(req);
   }
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(JweJwtAuthGuard)
   @Get('token')
   async getJwtToken(@Req() req) {
     const user = req.user;
     return user;
   }
+
 }

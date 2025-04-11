@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import * as jwt from 'jsonwebtoken';
+import * as fs from 'fs';
+import { EncryptJWT } from 'jose';
 
 @Injectable()
 export class AuthService {
@@ -11,13 +14,35 @@ export class AuthService {
 
   async makeJwtToken(user: { id: number; email: string }) {
     const roles = ['guest'];
-    const payload = { sub: user.id, email: user.email, roles: roles }
-    const token = this.jwtService.sign(payload);
 
-    return {
-      accessToken: token,
-      user,
-    }
+    const jwtPrivateKeyPath = this.configService.get('JWT_PRIVATE_KEY_PATH');
+    const jweSecret = this.configService.get('JWE_SECRET');
+
+    const privateKey = fs.readFileSync(jwtPrivateKeyPath, 'utf8');
+    const secret = Buffer.from(jweSecret, 'base64');
+
+    // 1. sign JWT (RS256)
+    const jwtToken = jwt.sign(
+      {
+        sub: user.id,
+        email: user.email,
+        roles: roles,
+      },
+      privateKey,
+      {
+        algorithm: 'RS256',
+        expiresIn: '1h',
+      },
+    );
+
+    // 2. encrypt JWT (JWE)
+    const jweToken = await new EncryptJWT({token: jwtToken})
+    .setProtectedHeader({ alg: 'dir', enc: 'A256GCM' })
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .encrypt(secret);
+
+    return { jweToken };
   }
 
   async getJwtSecret() {
