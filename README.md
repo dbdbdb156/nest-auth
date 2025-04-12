@@ -19,6 +19,11 @@
 1. cd nest-auth // git clone 한 root 디렉토리 위치
 2. docker compose --env-file .env -f docker/docker-compose.yml up -d // mongoDB docker 로 구동
 
+## RSA Key Pair Generation using OpenSSL
+1. cd nest-auth // git clone 한 root 디렉토리 위치
+2. openssl genrsa -out keys/private.pem 2048
+3. openssl rsa -in keys/private.pem -pubout -out keys/public.pem
+
 ## Compile and run the project
 
 ```bash
