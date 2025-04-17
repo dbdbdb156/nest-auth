@@ -25,10 +25,10 @@ export class AuthService {
   accessTokenExpiredTTL: string = '5m'
   refreshTokenExpiredTTL: string = '7d'
 
-  async makeJwtToken(user: { id: number; email: string }) {
+  async makeJwtToken(user: { id: string; email: string }) {
     const roles = ['guest'];
     const userDto = {
-      id: user.id,
+      userId: user.id,
       email: user.email,
       roles: roles
     }
@@ -45,7 +45,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async makeJweToken(user: { id: number; email: string; roles: Array<string>;}, expriesIn: string) {
+  async makeJweToken(user: { userId: string; email: string; roles: Array<string>;}, expriesIn: string) {
     const jwtPrivateKeyPath = this.configService.get('JWT_PRIVATE_KEY_PATH');
     const jweSecret = this.configService.get('JWE_SECRET');
 
@@ -55,7 +55,7 @@ export class AuthService {
     // 1. sign JWT (RS256)
     const jwtToken = jwt.sign(
       {
-        sub: user.id,
+        userId: user.userId,
         email: user.email,
         roles: user.roles,
       },
@@ -115,7 +115,7 @@ export class AuthService {
     }
 
     const userDto = {
-      id: verified.id,
+      userId: verified.userId,
       email: verified.email,
       roles: verified.roles
     }

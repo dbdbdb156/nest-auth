@@ -19,7 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any) {
     // request.user에 저장될 값
     return {
-      id: payload.sub,
+      userId: payload.userId,
       email: payload.email,
       roles: payload.roles,
     };

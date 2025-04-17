@@ -2,7 +2,7 @@
 import mongoose, { Schema } from 'mongoose';
 
 const RefreshTokenSchema = new Schema({
-  userId: Number,
+  userId: String,
   refreshToken: String,
   createdAt: Date,
 });
