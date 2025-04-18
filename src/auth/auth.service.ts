@@ -89,10 +89,8 @@ export class AuthService {
       // 1. JWE 복호화
       const secret = Buffer.from(jweSecret, 'base64');
       const { payload } = await jwtDecrypt(jweToken, secret);
-      console.log('payload : '+payload);
   
       const signedJwt = payload.token as string;
-      console.log('signedJwt : '+signedJwt);
   
       // 2. JWS 서명 검증
       const jwtPublicKeyPath = this.configService.get('JWT_PUBLIC_KEY_PATH');
@@ -108,7 +106,7 @@ export class AuthService {
       throw new UnauthorizedException('Refresh token error');
     }
 
-    const tokenDoc = await this.refreshTokenModel.findOne({ userId: verified.sub });
+    const tokenDoc = await this.refreshTokenModel.findOne({ userId: verified.userId });
 
     if (!tokenDoc || tokenDoc.refreshToken !== oldRefreshToken) {
       throw new UnauthorizedException('Refresh token mismatch or not found');
