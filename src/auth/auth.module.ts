@@ -6,6 +6,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RefreshTokenSchema } from './schemas/refresh-token.schema';
+import { UserModule } from 'src/user/user.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -16,7 +18,8 @@ import { RefreshTokenSchema } from './schemas/refresh-token.schema';
         signOptions: { expiresIn: '1d' },
       }),
     }),
-    MongooseModule.forFeature([{ name: 'RefreshToken', schema: RefreshTokenSchema }])
+    MongooseModule.forFeature([{ name: 'RefreshToken', schema: RefreshTokenSchema }]),
+    UserModule
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

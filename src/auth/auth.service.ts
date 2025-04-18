@@ -1,4 +1,4 @@
-import { UnauthorizedException, Injectable } from '@nestjs/common';
+import { UnauthorizedException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, TokenExpiredError, JsonWebTokenError } from '@nestjs/jwt';
 import * as jwt from 'jsonwebtoken';
@@ -6,6 +6,8 @@ import * as fs from 'fs';
 import { EncryptJWT, jwtDecrypt } from 'jose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { UserDto } from '../user/dto/user.dto'
+import { UserService } from 'src/user/user.service';
 
 export type RefreshTokenDocument = {
   _id: string;
@@ -19,22 +21,23 @@ export class AuthService {
   constructor(
     private readonly configService: ConfigService,
     private jwtService: JwtService,
+    private userService: UserService,
     @InjectModel('RefreshToken') private refreshTokenModel: Model<RefreshTokenDocument>) {
   }
 
   accessTokenExpiredTTL: string = '5m'
   refreshTokenExpiredTTL: string = '7d'
 
-  async makeJwtToken(user: { id: string; email: string }) {
-    const roles = ['guest'];
-    const userDto = {
-      userId: user.id,
-      email: user.email,
-      roles: roles
+  async makeJwtToken(request: { userId: string}) { // user: { id: string; email: string }) {
+
+    console.log('user :' +  request.userId)
+    const user = await this.userService.findOne(request.userId);
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
     }
     
-    const accessToken = await this.makeJweToken(userDto, this.accessTokenExpiredTTL);
-    const refreshToken = await this.makeJweToken(userDto, this.refreshTokenExpiredTTL);
+    const accessToken = await this.makeJweToken(user, this.accessTokenExpiredTTL);
+    const refreshToken = await this.makeJweToken(user, this.refreshTokenExpiredTTL);
 
     await this.refreshTokenModel.findOneAndUpdate(
       { userId: user.id },
@@ -45,7 +48,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async makeJweToken(user: { userId: string; email: string; roles: Array<string>;}, expriesIn: string) {
+  async makeJweToken(user: UserDto, expriesIn: string) {
     const jwtPrivateKeyPath = this.configService.get('JWT_PRIVATE_KEY_PATH');
     const jweSecret = this.configService.get('JWE_SECRET');
 
@@ -55,7 +58,8 @@ export class AuthService {
     // 1. sign JWT (RS256)
     const jwtToken = jwt.sign(
       {
-        userId: user.userId,
+        userId: user.id,
+        nickname: user.nickname,
         email: user.email,
         roles: user.roles,
       },
@@ -114,6 +118,7 @@ export class AuthService {
 
     const userDto = {
       userId: verified.userId,
+      nickname: verified.nickname,
       email: verified.email,
       roles: verified.roles
     }
